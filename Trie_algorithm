@@ -1,0 +1,89 @@
+// Bismillahir Rahmanir Rahim
+#include <bits/stdc++.h>
+
+using namespace std;
+#define int long long
+#define resiz(x) x.resize(unique(x.begin(), x.end()) - x.begin())
+const long long N = 2e5 + 5, mod = 1000000007, inv = (mod + 1) / 2;
+//https://codeforces.com/contest/2093/submission/326441019
+struct trie {
+  static const int B = 30;
+  struct Node  {
+    Node* next[2];
+    int sz;
+    Node() {
+      next[0] = next[1] = NULL;
+      sz = 0;
+    }
+  } *root;
+  trie() {
+    root = new Node();
+  }
+  void insert(int val) {
+    Node* cur = root;
+    cur->sz++;
+    for (int i = B; i >= 0; i--) {
+      int on = (val >> i) & 1;
+      if(!cur->next[on]) {
+        cur->next[on] = new Node();
+      }
+      cur = cur->next[on];
+      cur->sz++;
+    }
+  }
+  void erase(int val) {
+      Node* cur = root;
+    cur->sz--;
+    for (int i = B; i >= 0; i--) {
+      int on = (val >> i) & 1;
+      cur = cur->next[on];
+      cur->sz--;
+    }
+  }
+  int get_max(int x) {
+    Node* cur = root;
+    int ans = 0;
+    for (int i = B; i >= 0; i--) {
+      int on = (x >> i) & 1;
+      if(cur->next[1 ^ on] and cur->next[on^1]->sz> 0) {
+        ans |= (1 << i);
+        cur = cur->next[1^on];
+      } else {
+      cur = cur->next[on];
+      }
+    }
+    return ans;
+  }
+};
+void test() {
+  int n, k; cin >> n >> k;
+  vector <int>a(n);
+  for (auto &i: a) {
+    cin >> i;
+  }
+  trie tr;
+  int l = 0, ans = n + 1;
+  for (int i = 0; i < n; i++) {
+    tr.insert(a[i]);
+    while(l <= i and tr.get_max(a[i]) >= k) {
+      ans = min(ans, i - l + 1);
+      tr.erase(a[l]);
+      l++;
+    }
+  }
+  if( ans == n + 1) {
+    cout << -1 << endl;
+    return;
+  } cout << ans << endl;
+}
+
+signed main() {
+  ios_base::sync_with_stdio(false);
+  cin.tie(0);
+  int tt = 1;
+  cin >> tt;
+  while (tt--) {
+    test();
+  }
+  return 0;
+}
