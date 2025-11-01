@@ -1,0 +1,130 @@
+
+// Bismillahir Rahmanir Rahim
+#include <bits/stdc++.h>
+using namespace std;
+
+#define int long long
+#define endl '\n'
+#define all(x) x.begin(), x.end()
+#define fix(a) cout<<fixed<<setprecision(a); 
+#define resiz(x) x.resize(unique(x.begin(), x.end()) - x.begin())
+const long long N = 1e6 + 5,
+  mod = 998244353,
+  inf = 1e10 + 1;
+struct edge {
+    int to; 
+    int cap;
+    int rev;
+};
+vector<vector<edge>>g;
+vector<int>level;
+vector<int>vis;
+void add_edge(int from, int to, int cap) {
+    g[from].push_back({to, cap, (int)g[to].size()});
+    g[to].push_back({from, 0, (int)g[from].size() - 1});
+}
+void bfs(int s) {
+    fill(level.begin(), level.end(), - 1);
+    queue<int>q;
+    level[s] = 0;
+    q.push(s);
+    while(!q.empty()) {
+        int v = q.front();
+        q.pop();
+        for(auto &e: g[v]) {
+            if(e.cap > 0 and level[e.to] < 0) {
+                level[e.to] = level[v] + 1;
+                q.push(e.to);
+            }
+        }
+    }
+}
+int dfs(int v, int t, int f) {
+    if(v ==  t) {
+        return f;
+    }
+    for(auto &i = vis[v]; i < g[v].size(); i++) {
+        edge &e = g[v][i];
+        if(e.cap > 0 and level[v] < level[e.to]) {
+            int d = dfs(e.to, t, min(f, e.cap));
+            if(d > 0) {
+                e.cap -= d;
+                g[e.to][e.rev].cap += d;
+                return d;
+            }
+        }
+    }
+    return 0;
+}
+int max_flow(int s, int t) {
+    int flow = 0;
+    while(true) {
+        bfs(s);
+        if(level[t] < 0) return flow;
+        fill(vis.begin(), vis.end(), 0);
+        int f ;
+        while((f = dfs(s, t, inf)) > 0) {
+            flow += f;
+        }
+    }
+}
+void test() {
+    int n; cin >> n;
+    vector<tuple<int,int,int>>supply;
+    vector<pair<int,int>>demand;
+    long long total_surv = 0;
+    for(int i = 0; i < n; i++) {
+        for(int j = 0; j < n; j++) {
+            int x; cin >> x;
+            if(x > 1) {
+                x--;
+                supply.push_back({i, j, x});
+                total_surv += x;
+            } else if(x == 0) {
+                demand.push_back({i,j});
+            }
+        }
+    }
+    int num_sup = supply.size();
+    int num_demand = demand.size();
+    int source = 0;
+    int num_nodes = num_sup + num_demand + 2 *n + 2;
+    auto supply_node = [&](int idx) {return 1 + idx; };
+    auto demand_node = [&](int idx) {return 1 + num_sup + idx; };
+    auto row_node = [&](int idx) {return 1 +num_demand + num_sup + idx; };
+    auto col_node = [&](int idx) {return 1 + num_demand + num_sup + n + idx; };
+    g.resize(num_nodes);
+    level.resize(num_nodes);
+    vis.resize(num_nodes);
+    int sink = num_nodes - 1;
+    for(int k = 0; k < num_sup; k++) {
+        // int i, j, amount;
+        auto &[i, j, amount] = supply[k];
+        add_edge(source, supply_node(k), amount);
+        add_edge(supply_node(k),row_node(i),inf);
+        add_edge(supply_node(k), col_node(j), inf);
+
+    }
+    for(int k = 0; k < num_demand; k++) {
+        // int i, j, amount;
+        auto &[i, j] = demand[k];
+        add_edge(row_node(i), demand_node(k), inf);
+        add_edge(col_node(j),demand_node(k),inf);
+        add_edge(demand_node(k), sink, 1);
+
+    }
+    int N1 = max_flow(source, sink);
+    cout << total_surv * 2 - N1 << endl;
+}
+
+int32_t main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    int t = 1, ct = 1;
+    //cin >> t;
+    while (t--) {
+        test();
+        ct++;
+    }
+    return 0;
+}
